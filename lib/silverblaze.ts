@@ -76,8 +76,9 @@ export async function fetchServiceStatus(): Promise<{ ok: boolean; status?: numb
       }),
       next: { revalidate: 0 },
     });
-    let body: unknown;
-    try { body = await res.json(); } catch { body = await res.text(); }
+    const text = await res.text();
+    let body: unknown = text;
+    try { body = JSON.parse(text); } catch { /* keep as text */ }
     return { ok: res.ok, status: res.status, body };
   } catch (err) {
     return { ok: false, error: String(err) };
@@ -97,12 +98,11 @@ export async function fetchUsageData(
       }),
       next: { revalidate: 0 },
     });
-    let body: unknown;
+    const rawText = await res.text();
+    let body: unknown = rawText;
     const contentType = res.headers.get('content-type') ?? '';
     if (contentType.includes('json')) {
-      try { body = await res.json(); } catch { body = await res.text(); }
-    } else {
-      body = await res.text();
+      try { body = JSON.parse(rawText); } catch { /* keep as text */ }
     }
     return { ok: res.ok, status: res.status, body };
   } catch (err) {
